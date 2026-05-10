@@ -2,7 +2,7 @@
 
 > [← 인덱스로 돌아가기](./index.md)
 
-**네비게이션:** `/(main)/my/index` + `/(main)/my/settings` + `/(main)/my/partner` + `/(main)/my/records`
+**네비게이션:** `/(main)/my/index` + `/(main)/my/settings` + `/(main)/my/partner` + `/(main)/my/records` + `/(main)/my/memory`
 
 ![마이페이지](../screen_mypage.png)
 
@@ -55,6 +55,26 @@ PartnerScreen
 
 ---
 
+## 기억 관리 화면 구성
+
+백엔드 Privacy/Consent Layer가 제공하는 AI 기억 관련 기능을 사용자가 직접 제어하는 화면이다.
+설정 화면에서 "AI 기억 관리" 항목을 통해 진입한다.
+
+```
+MemoryScreen
+  ├── MemoryHeader               # ← 뒤로가기 + "AI 기억 관리" 제목
+  ├── MemoryListSection          # "Mio가 기억하는 항목" 목록
+  │   └── MemoryItem × N        # 기억 내용 + 개별 삭제 버튼
+  ├── CategoryToggleSection      # "카테고리별 기억 설정"
+  │   ├── EmotionPatternToggle   # 감정 패턴 기억 on/off
+  │   └── BehaviorHistoryToggle  # 행동 이력 기억 on/off
+  ├── AutoExpireNotice           # "민감 기억은 일정 기간 후 자동 만료됩니다" 안내 문구
+  ├── ExportDataButton           # "내 데이터 내보내기"
+  └── ResetMemoryButton          # "장기 메모리 초기화" (위험 색상, 확인 다이얼로그)
+```
+
+---
+
 ## 재구성 기록 화면 구성
 
 ```
@@ -89,9 +109,17 @@ SettingsScreen
   │   ├── TermsRow
   │   ├── PrivacyRow
   │   └── LegalConsentRow
+  ├── MemoryRow                  # "AI 기억 관리 >" → MemoryScreen 진입
   └── AccountSection
        ├── LogoutButton
        └── DeleteAccountButton
+
+MemoryScreen
+  ├── MemoryItem
+  ├── CategoryToggleSection
+  ├── AutoExpireNotice
+  ├── ExportDataButton
+  └── ResetMemoryButton          # 탭 시 확인 다이얼로그 → useMutation 호출
 
 PartnerScreen
   ├── CurrentPartnerCard         # 선택된 상태 강조 (보라색 테두리)
@@ -140,6 +168,14 @@ useMutation(['my', 'partner', 'update'])     // 파트너 변경 → ['my', 'pro
 useMutation(['my', 'settings', 'update'])    // 알림 설정 토글 변경
 useMutation(['my', 'account', 'logout'])     // 로그아웃 → 전체 쿼리 캐시 초기화
 useMutation(['my', 'account', 'delete'])     // 회원 탈퇴 → 세션·캐시 전체 초기화
+
+// 기억 관리 (my/memory.tsx)
+useQuery(['my', 'memory', 'list'])           // AI 기억 항목 목록
+useQuery(['my', 'memory', 'categories'])     // 카테고리별 기억 설정 (토글 상태)
+useMutation(['my', 'memory', 'delete'])      // 개별 기억 삭제 → memory/list 캐시 무효화
+useMutation(['my', 'memory', 'category'])    // 카테고리 기억 토글 변경
+useMutation(['my', 'memory', 'export'])      // 데이터 내보내기 요청
+useMutation(['my', 'memory', 'reset'])       // 장기 메모리 전체 초기화
 ```
 
 ---

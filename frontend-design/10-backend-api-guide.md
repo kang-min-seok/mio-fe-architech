@@ -246,14 +246,14 @@ type TodoStatus = 'suggested' | 'accepted' | 'completed' | 'skipped' | 'failed';
 
 ## 13. 요약 — 프론트엔드 설계 반영 필요 항목
 
-| # | 항목 | 우선순위 | 관련 문서 |
-|---|---|---|---|
-| 1 | **채팅 SSE 확정** — WebSocket 검토 불필요 | 높음 | `04-pages-chat.md`, `08-next-steps.md` |
-| 2 | **BUFFER_AND_JUDGE 처리** — 스트리밍 없는 단일 응답 케이스 구현 | 높음 | `04-pages-chat.md` |
-| 3 | **감정 타입 정합성** — 백엔드와 협의 후 `checkinStore.EmotionType` 확정 | 높음 | `07-state-management.md` |
-| 4 | **공통 응답 포맷 확정** — API 명세 나오면 Axios 인터셉터 및 파싱 코드 반영 | 높음 | — |
-| 5 | **First Token Latency** — isTyping 타임아웃 정책 설정 | 중간 | `04-pages-chat.md` |
-| 6 | **메모리·개인정보 UI** — 마이페이지에 기억 관리 화면 추가 | 중간 | `04-pages-mypage.md` |
-| 7 | **엔드포인트 HTTP 메서드 확정** — API 명세 확정 후 각 도메인 경로·메서드 반영 | 중간 | — |
-| 8 | **캐릭터 ID 매핑** — 5종 ID 확인 (mio/bau/rumi/momo/chichi) | 낮음 | `07-state-management.md` |
-| 9 | **To-do 상태 값 확인** — 5종 status 값 API 명세와 맞추기 | 낮음 | — |
+| # | 항목 | 우선순위 | 상태 | 관련 문서 |
+|---|---|---|---|---|
+| 1 | **채팅 SSE 확정** — WebSocket 검토 불필요 | 높음 | ✅ 반영 완료 | `04-pages-chat.md`, `08-next-steps.md` |
+| 2 | **BUFFER_AND_JUDGE 처리** — 스트리밍 없는 단일 응답 케이스 구현 | 높음 | ✅ 반영 완료 | `04-pages-chat.md` |
+| 3 | **감정 타입 정합성** — 백엔드와 협의 후 `checkinStore.EmotionType` 확정 | 높음 | ⚠️ TODO 주석 추가 (백엔드 협의 대기) | `07-state-management.md` |
+| 4 | **공통 응답 포맷 확정** — API 명세 나오면 Axios 인터셉터 및 파싱 코드 반영 | 높음 | ⏳ API 명세 대기 | — |
+| 5 | **First Token Latency** — isTyping 타임아웃 정책 설정 | 중간 | ✅ 반영 완료 | `04-pages-chat.md` |
+| 6 | **메모리·개인정보 UI** — 마이페이지에 기억 관리 화면 추가 | 중간 | ✅ 반영 완료 | `04-pages-mypage.md` |
+| 7 | **엔드포인트 HTTP 메서드 확정** — API 명세 확정 후 각 도메인 경로·메서드 반영 | 중간 | ⏳ API 명세 대기 | — |
+| 8 | **캐릭터 ID 매핑** — 5종 ID 확인 (mio/bau/rumi/momo/chichi) | 낮음 | ✅ 반영 완료 | `07-state-management.md` |
+| 9 | **To-do 상태 값 확인** — 5종 status 값 API 명세와 맞추기 | 낮음 | ⏳ API 명세 대기 | — |

@@ -34,6 +34,13 @@ interface AuthState {
 }
 ```
 
+### 공유 타입
+
+```typescript
+// 캐릭터 ID — 백엔드 character 도메인과 동일한 5종 값 사용 (mio-system-architecture.md 기준)
+type CharacterId = 'mio' | 'bau' | 'rumi' | 'momo' | 'chichi'
+```
+
 ### onboardingStore
 
 ```typescript
@@ -91,6 +98,8 @@ interface ChatState {
 ### checkinStore
 
 ```typescript
+// TODO: 백엔드 EmotionalStateMemory 타입(anxiety/sadness/anger/shame/stress/neutral/positive)과
+//       불일치. 백엔드 협의 후 이 타입 또는 API 매핑 방식 확정 필요. (10-backend-api-guide.md §5)
 type EmotionType = 'happy' | 'calm' | 'neutral' | 'anxious' | 'tired'
 type CheckinStep = 'emotion' | 'intensity' | 'diary'
 
