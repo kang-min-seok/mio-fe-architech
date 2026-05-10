@@ -11,11 +11,23 @@
 ## 오늘의 체크인 플로우
 
 ```
-감정 선택 (이모지 5종)
+감정 선택 (이모지 7종 — 백엔드 EmotionType 기준)
   → 감정 강도 입력 (슬라이더 0~100)
-  → 오늘 하루 어땠는지 텍스트 입력 (선택, 200자)
+  → 오늘 하루 어땠는지 텍스트 입력 (선택, 200자 / React Hook Form + Zod)
   → 완료 버튼
 ```
+
+### 감정 이모지 매핑 (constants/emotions.ts)
+
+| EmotionType | 이모지 | 한글 라벨 | 색상 토큰 |
+|---|---|---|---|
+| `anxiety` | 😰 | 불안 | `emotion.anxiety` (#F59E0B) |
+| `sadness` | 😢 | 슬픔 | `emotion.sadness` (#60A5FA) |
+| `anger` | 😠 | 화남 | `emotion.anger` (#F87171) |
+| `shame` | 😳 | 부끄러움 | `emotion.shame` (#C084FC) |
+| `stress` | 😤 | 스트레스 | `emotion.stress` (#FB923C) |
+| `neutral` | 😐 | 무감정 | `emotion.neutral` (#94A3B8) |
+| `positive` | 😊 | 기쁨 | `emotion.positive` (#34D399) |
 
 ---
 
@@ -32,7 +44,7 @@
 ```
 CheckinScreen
   ├── CheckinHeader            # 날짜 + 요일
-  ├── EmotionSelector          # 이모지 5종 선택 (happy/calm/neutral/anxious/tired)
+  ├── EmotionSelector          # 이모지 7종 선택 (백엔드 EmotionType 기준)
   ├── IntensitySlider          # 0~100 슬라이더, 중앙 숫자 표시
   ├── DiaryTextInput           # 멀티라인 TextInput (200자 제한)
   └── CompleteButton
@@ -82,4 +94,5 @@ useMutation(['checkin', 'create'])           // 체크인 저장 → 홈 today �
 ## 관련 문서
 
 - [상태 관리 설계](./07-state-management.md) — checkinStore 상세 인터페이스
-- [공통 컴포넌트](./05-components.md) — IntensitySlider
+- [공통 컴포넌트](./05-components.md) — IntensitySlider, ErrorState, LoadingSkeleton
+- [디자인 토큰](./11-design-tokens.md) — 감정 색상 토큰 (`emotion.*`)

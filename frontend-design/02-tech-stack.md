@@ -26,15 +26,25 @@
 
 ## 기타
 
-| 분류 | 기술 |
-|---|---|
-| 차트 | `victory-native` 또는 `react-native-gifted-charts` |
-| 채팅 UI | 커스텀 FlatList |
-| 슬라이더 | `@miblanchard/react-native-slider` |
-| 아이콘 | `expo-vector-icons` (Ionicons) |
-| 날짜 | `date-fns` |
-| 환경변수 | `expo-constants` + `.env` |
-| 푸시 알림 | `expo-notifications` + Firebase FCM |
+| 분류 | 기술 | 비고 |
+|---|---|---|
+| 차트 | `victory-native` | ✅ 확정 — SVG 기반, Expo/RN 공식 지원 |
+| 채팅 UI | 커스텀 FlatList | |
+| 슬라이더 | `@miblanchard/react-native-slider` | |
+| 아이콘 | `expo-vector-icons` (Ionicons) | |
+| 날짜 | `date-fns` | |
+| 환경변수 | `expo-constants` + `.env` | |
+| 푸시 알림 | `expo-notifications` + Firebase FCM | |
+| SSE 스트리밍 | `@microsoft/fetch-event-source` | React Native 환경에서 EventSource 대체 — fetch 기반, Authorization 헤더 지원 |
+| 폼 관리 | `react-hook-form` + `zod` | 사용처: 체크인 일기(200자 제한), 마음탐색 닉네임(필수·최대 20자), 마이페이지 닉네임 수정 |
+
+---
+
+## 테마 방향
+
+- **기본값:** 다크 모드
+- **라이트 지원:** 시스템 설정(`useColorScheme`) 또는 마이페이지 설정에서 전환 가능
+- **구현 방식:** NativeWind `dark:` prefix 클래스 + `tailwind.config.js` 커스텀 색상 — 상세 토큰은 [디자인 토큰](./11-design-tokens.md) 참조
 
 ---
 

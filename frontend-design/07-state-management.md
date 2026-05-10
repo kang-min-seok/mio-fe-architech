@@ -27,9 +27,13 @@ interface AuthState {
   nickname: string | null
   accessToken: string | null
   isAuthenticated: boolean
+  isOnboarded: boolean                       // 온보딩 완료 여부 — AuthGuard 분기 기준 (03-navigation.md §AuthGuard)
+  currentPartnerId: CharacterId | null       // 현재 선택된 AI 파트너 ID — 채팅·마이페이지 캐시 무효화 기준
   // 액션
   setAuth: (userId: string, nickname: string, accessToken: string) => void
   setAccessToken: (token: string) => void   // Axios 인터셉터에서 토큰 갱신 시 호출
+  setOnboarded: () => void                   // 온보딩 useMutation 성공 후 호출
+  setCurrentPartner: (characterId: CharacterId) => void  // 파트너 변경 확정(useMutation 성공) 후 호출
   logout: () => void                         // 상태 초기화 + SecureStore 삭제
 }
 ```
@@ -84,12 +88,15 @@ interface ChatState {
   // 상태
   messages: ChatMessage[]                     // 현재 세션 메시지 (히스토리 로드 후 append)
   isTyping: boolean                           // AI 응답 대기 중
+  isConnected: boolean                        // SSE 연결 활성 여부 (useChatSSE 훅이 관리)
   streamingMessageId: string | null           // 현재 스트리밍 수신 중인 AI 메시지 ID
   restructurePrompt: RestructurePrompt | null // 인라인 재구성 제안 카드 데이터
   // 액션
   addMessage: (message: ChatMessage) => void
   appendStreamChunk: (messageId: string, chunk: string) => void  // SSE 청크 수신 시 해당 메시지에 append
+  addSingleResponse: (message: ChatMessage) => void              // BUFFER_AND_JUDGE·SECURITY_REFUSAL·CRISIS_FLOW 처리
   setTyping: (isTyping: boolean) => void
+  setConnected: (connected: boolean) => void
   setRestructurePrompt: (prompt: RestructurePrompt | null) => void
   reset: () => void
 }
@@ -98,9 +105,9 @@ interface ChatState {
 ### checkinStore
 
 ```typescript
-// TODO: 백엔드 EmotionalStateMemory 타입(anxiety/sadness/anger/shame/stress/neutral/positive)과
-//       불일치. 백엔드 협의 후 이 타입 또는 API 매핑 방식 확정 필요. (10-backend-api-guide.md §5)
-type EmotionType = 'happy' | 'calm' | 'neutral' | 'anxious' | 'tired'
+// 백엔드 EmotionalStateMemory 타입과 동일한 값 사용 — 확정 (10-backend-api-guide.md §5)
+// UI 이모지·한글 라벨은 constants/emotions.ts 에서 관리
+type EmotionType = 'anxiety' | 'sadness' | 'anger' | 'shame' | 'stress' | 'neutral' | 'positive'
 type CheckinStep = 'emotion' | 'intensity' | 'diary'
 
 interface CheckinState {
@@ -116,6 +123,18 @@ interface CheckinState {
   nextStep: () => void
   prevStep: () => void
   reset: () => void                           // 체크인 저장 완료 후 호출
+}
+```
+
+### partnerStore
+
+```typescript
+interface PartnerState {
+  // 상태
+  selectedPartnerId: CharacterId | null   // 변경 확정 전 임시 선택 상태 (PartnerScreen 로컬)
+  // 액션
+  setSelectedPartner: (characterId: CharacterId) => void
+  reset: () => void                        // PartnerScreen 이탈(취소·성공) 시 임시 선택 초기화
 }
 ```
 
@@ -163,7 +182,7 @@ interface MindExploreState {
 | `(main)/chat/restructure` | chatStore | restructurePrompt R, `setRestructurePrompt(null)` W |
 | `(main)/report` | — | useState(period) + TanStack Query만 사용 |
 | `(main)/my` | authStore | `nickname` R, `logout()` W |
-| `(main)/my/partner` | — | TanStack Query만 사용 |
+| `(main)/my/partner` | partnerStore, authStore | `selectedPartnerId` R/W, `reset()` W / 변경 확정 후 `setCurrentPartner()` W |
 | `(main)/my/settings` | — | TanStack Query만 사용 |
 | `mind-explore/index` | mindExploreStore | `reset()` W, `initSession()` W |
 | `mind-explore/[stageId]` | mindExploreStore | sessionId/nickname/choices R/W |
@@ -173,14 +192,46 @@ interface MindExploreState {
 
 ## TanStack Query 캐시 전략
 
+### QueryClient 전역 기본값
+
+```typescript
+// src/queries/queryClient.ts
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,                   // 실패 시 1회 재시도
+      staleTime: 1000 * 60 * 5,  // 전역 기본 5분
+      gcTime: 1000 * 60 * 10,    // 비활성 캐시 10분 후 GC
+      refetchOnWindowFocus: false, // 모바일 앱 포커스 복귀 시 자동 재요청 비활성
+    },
+    mutations: {
+      retry: 0,                   // 뮤테이션은 재시도 없음 (사용자가 명시적으로 재시도)
+    },
+  },
+})
+```
+
+### 도메인별 staleTime 오버라이드
+
 ```typescript
 const queryConfig = {
-  'home-today':      { staleTime: 1000 * 60 * 5  },  // 5분
-  'report-weekly':   { staleTime: 1000 * 60 * 10 },  // 10분
-  'chat-history':    { staleTime: 0               },  // 항상 최신
-  'characters':      { staleTime: Infinity         },  // 정적 데이터
+  'home-today':        { staleTime: 1000 * 60 * 5  },  // 5분
+  'report-weekly':     { staleTime: 1000 * 60 * 10 },  // 10분
+  'chat-history':      { staleTime: 0               },  // 항상 최신 (대화 일관성)
+  'characters':        { staleTime: Infinity         },  // 정적 데이터
+  'mind-explore-stages': { staleTime: Infinity       },  // 정적 시나리오
 }
 ```
+
+### 에러 처리 전략
+
+| 에러 유형 | 처리 방식 |
+|---|---|
+| `401 Unauthorized` | Axios 인터셉터 → Refresh Token 재발급 시도 → 실패 시 `logout()` + 로그인 화면 이동 |
+| `403 Forbidden` | 인터셉터에서 무시 (앱 내 권한 분리 없음 — USER 단일 롤) |
+| `5xx Server Error` | TanStack Query `retry: 1` — 1회 재시도 후 `ErrorState` 컴포넌트 노출 |
+| `Network Error` | TanStack Query `retry: 1` — 재시도 후 오프라인 안내 |
+| Mutation 실패 | 재시도 없음. 각 페이지에서 `onError` 콜백으로 Toast/Alert 처리 |
 
 ---
 
@@ -190,4 +241,6 @@ const queryConfig = {
 - [페이지 설계 — 체크인](./04-pages-checkin.md)
 - [페이지 설계 — 채팅](./04-pages-chat.md)
 - [페이지 설계 — 마음 탐색](./04-pages-mind-explore.md)
+- [네비게이션 구조](./03-navigation.md) — AuthGuard 분기 (isOnboarded 활용)
+- [디자인 토큰](./11-design-tokens.md) — 감정 색상 매핑
 - [폴더 구조](./06-folder-structure.md) — `src/stores/`, `src/queries/`

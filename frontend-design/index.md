@@ -20,12 +20,13 @@
 | 04-05 | [페이지 설계 — 리포트](./04-pages-report.md) | 기간 탭, 차트 구성, 쿼리 |
 | 04-06 | [페이지 설계 — 마이페이지](./04-pages-mypage.md) | 프로필, AI 파트너 변경, 설정, 재구성 기록, 감정 통계 |
 | 04-07 | [페이지 설계 — 마음 탐색](./04-pages-mind-explore.md) | 스테이지 플로우, 결과 화면, 상태/쿼리 |
-| 05 | [공통 컴포넌트](./05-components.md) | 사용처 교차 참조, 컴포넌트 트리 |
+| 05 | [공통 컴포넌트](./05-components.md) | 사용처 교차 참조, 컴포넌트 트리, Props 인터페이스, 에러/로딩 패턴 |
 | 06 | [폴더 구조](./06-folder-structure.md) | 전체 프로젝트 디렉토리 구조 |
-| 07 | [상태 관리 설계](./07-state-management.md) | Zustand store 설계, 페이지별 의존성, TanStack Query 캐시 전략 |
+| 07 | [상태 관리 설계](./07-state-management.md) | Zustand store 설계, 페이지별 의존성, TanStack Query 캐시·에러 전략 |
 | 08 | [다음 설계 단계](./08-next-steps.md) | 남은 작업 체크리스트 |
 | 09 | [푸시 알림 설계](./09-push-notifications.md) | FCM 알림 타입, 토큰 관리, 딥링크 처리 |
-| 10 | [백엔드 API 연동 가이드](./10-backend-api-guide.md) | 인증 흐름, API 그룹, SSE 확정, 응답 포맷, 감정 타입 정합성, AI 동작 |
+| 10 | [백엔드 API 연동 가이드](./10-backend-api-guide.md) | 인증 흐름, API 그룹, SSE 확정, 응답 포맷, 감정 타입 확정, AI 동작 |
+| 11 | [디자인 토큰](./11-design-tokens.md) | 색상 팔레트(다크+라이트), 감정 색상, 타이포그래피, 간격, NativeWind 설정 |
 
 ---
 
@@ -52,7 +53,10 @@
 | 네비게이션 | React Navigation (Expo Router) |
 | 상태 관리 | Zustand |
 | 서버 통신 | TanStack Query v5 + Axios |
-| 스타일링 | NativeWind |
+| SSE 스트리밍 | @microsoft/fetch-event-source |
+| 스타일링 | NativeWind (다크 기본 + 라이트 지원) |
+| 차트 | victory-native |
+| 폼 관리 | React Hook Form + Zod |
 | 애니메이션 | Reanimated 3 + Lottie |
 | 푸시 알림 | Firebase FCM + expo-notifications |
 

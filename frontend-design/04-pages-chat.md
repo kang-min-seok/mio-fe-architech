@@ -117,13 +117,116 @@ RestructureScreen
 
 ---
 
+## SSE 통합 패턴 (useChatSSE 훅)
+
+TanStack Query `useMutation`은 Promise 기반이므로 SSE 스트림과 직접 통합이 불가능하다.  
+`@microsoft/fetch-event-source`를 사용하는 커스텀 훅 `useChatSSE`로 분리한다.
+
+### 역할 분담
+
+| 레이어 | 역할 |
+|---|---|
+| `useMutation(['chat', 'send'])` | 사용 안 함 — SSE 연결이 전송과 동시에 시작되므로 |
+| `useChatSSE` 커스텀 훅 | 메시지 전송 + SSE 연결 + chatStore 업데이트 일괄 처리 |
+| `useInfiniteQuery(['chat', 'messages'])` | 히스토리 로드 전용 (최초 진입·스크롤 상단) |
+| `useMutation(['chat', 'restructure', 'save'])` | 재구성 결과 저장 전용 |
+
+### useChatSSE 설계
+
+```typescript
+// src/queries/useChat.ts
+function useChatSSE() {
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const { addMessage, appendStreamChunk, addSingleResponse, setTyping, setConnected } = useChatStore()
+  const { accessToken } = useAuthStore()
+
+  const sendMessage = async (content: string) => {
+    // 1. 이전 연결 취소
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    // 2. 사용자 메시지 낙관적 추가
+    const userMsg: ChatMessage = { id: uuid(), type: 'text', content, sender: 'user', createdAt: new Date() }
+    addMessage(userMsg)
+    setTyping(true)
+
+    // 3. AI 응답용 플레이스홀더 메시지 생성
+    const aiMsgId = uuid()
+
+    try {
+      await fetchEventSource('/conversations/messages', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+        signal: controller.signal,
+        onopen: async (res) => {
+          setConnected(true)
+          setTyping(false)
+          // 스트리밍 모드인 경우 플레이스홀더 메시지 추가
+          if (res.headers.get('content-type')?.includes('text/event-stream')) {
+            addMessage({ id: aiMsgId, type: 'ai-text', content: '', sender: 'ai', createdAt: new Date() })
+          }
+        },
+        onmessage: (event) => {
+          const data = JSON.parse(event.data)
+          if (data.type === 'chunk') {
+            appendStreamChunk(aiMsgId, data.content)   // NORMAL_STREAM · SAFE_STREAM
+          } else if (data.type === 'complete') {
+            addSingleResponse({ id: aiMsgId, type: 'ai-text', content: data.content, sender: 'ai', createdAt: new Date() })
+            // BUFFER_AND_JUDGE · SECURITY_REFUSAL · CRISIS_FLOW
+          } else if (data.type === 'restructure') {
+            setRestructurePrompt(data.prompt)           // CBT 감지 시 재구성 카드 노출
+          }
+        },
+        onerror: () => {
+          setConnected(false)
+          setTyping(false)
+          controller.abort()
+        },
+        onclose: () => {
+          setConnected(false)
+          setTyping(false)
+        },
+      })
+    } catch {
+      setConnected(false)
+      setTyping(false)
+    }
+  }
+
+  // 컴포넌트 unmount 또는 앱 백그라운드 진입 시 연결 해제
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+      setConnected(false)
+    }
+  }, [])
+
+  return { sendMessage }
+}
+```
+
+### 연결 생명주기
+
+| 이벤트 | 처리 |
+|---|---|
+| 채팅 화면 mount | SSE 연결 없음 — 메시지 전송 시점에만 연결 |
+| 메시지 전송 | 이전 연결 abort → 새 SSE 연결 오픈 |
+| AI 응답 완료(`onclose`) | 연결 자동 종료 — `setConnected(false)` |
+| 컴포넌트 unmount | `abortController.abort()` — 스트리밍 중단 |
+| 앱 백그라운드 진입 | AppState 이벤트에서 `abortController.abort()` |
+| 앱 포그라운드 복귀 | 재연결 없음 — 다음 메시지 전송 시 자동 재연결 |
+
+---
+
 ## 데이터 의존성 (TanStack Query)
 
 ```typescript
 useQuery(['chat', 'character'])              // 현재 선택 캐릭터 정보 (이름, 아바타)
-useInfiniteQuery(['chat', 'messages'])       // 대화 히스토리 (역방향 페이지네이션)
-useMutation(['chat', 'send'])                // 메시지 전송 (SSE 스트리밍 응답)
+useInfiniteQuery(['chat', 'messages'])       // 대화 히스토리 (역방향 페이지네이션, 최초 진입)
 useMutation(['chat', 'restructure', 'save']) // 생각 재구성 결과 저장
+// 메시지 전송은 useChatSSE 훅으로 처리 (useMutation 아님)
 ```
 
 ---

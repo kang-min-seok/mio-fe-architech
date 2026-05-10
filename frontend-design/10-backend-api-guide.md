@@ -133,18 +133,18 @@ API 명세 확정 시 `restructurePrompt` 필드에 `distortionType`도 포함�
 
 ---
 
-## 5. 감정 타입 정합성 확인 필요
+## 5. 감정 타입 정합성 ✅ 확정
 
-현재 프론트엔드 `checkinStore`에 정의된 감정 타입과 백엔드 AI 메모리 레이어에서 사용하는 타입이 다르다.
+프론트엔드 `checkinStore`의 `EmotionType`을 **백엔드 타입으로 통일**한다.
 
 | | 타입 목록 |
 |---|---|
-| **프론트엔드** (checkinStore) | `happy`, `calm`, `neutral`, `anxious`, `tired` |
-| **백엔드** (AI EmotionalStateMemory) | `anxiety`, `sadness`, `anger`, `shame`, `stress`, `neutral`, `positive` |
+| **확정 타입** (프론트엔드 + 백엔드 동일) | `anxiety`, `sadness`, `anger`, `shame`, `stress`, `neutral`, `positive` |
+| ~~이전 프론트엔드 타입~~ (폐기) | ~~`happy`, `calm`, `neutral`, `anxious`, `tired`~~ |
 
-두 집합이 일치하지 않는다. 체크인 API 요청 시 어떤 값을 사용할지 백엔드와 협의해 확정해야 한다.
-백엔드가 프론트엔드 값을 받아 내부적으로 변환할 수도 있고, 프론트엔드가 백엔드 타입 그대로 사용할 수도 있다.
-이 결정은 `checkinStore.EmotionType` 정의에 직접 영향을 준다.
+- `checkinStore.EmotionType` 정의 업데이트 완료 (07-state-management.md)
+- UI 이모지·한글 라벨은 `constants/emotions.ts`에서 EmotionType → 이모지·라벨·색상으로 매핑
+- 체크인 API 요청 시 이 타입 값을 그대로 전송 (변환 레이어 없음)
 
 ---
 
@@ -250,7 +250,7 @@ type TodoStatus = 'suggested' | 'accepted' | 'completed' | 'skipped' | 'failed';
 |---|---|---|---|---|
 | 1 | **채팅 SSE 확정** — WebSocket 검토 불필요 | 높음 | ✅ 반영 완료 | `04-pages-chat.md`, `08-next-steps.md` |
 | 2 | **BUFFER_AND_JUDGE 처리** — 스트리밍 없는 단일 응답 케이스 구현 | 높음 | ✅ 반영 완료 | `04-pages-chat.md` |
-| 3 | **감정 타입 정합성** — 백엔드와 협의 후 `checkinStore.EmotionType` 확정 | 높음 | ⚠️ TODO 주석 추가 (백엔드 협의 대기) | `07-state-management.md` |
+| 3 | **감정 타입 정합성** — 백엔드 타입으로 통일 (`checkinStore.EmotionType` 확정) | 높음 | ✅ 반영 완료 | `07-state-management.md`, `04-pages-checkin.md` |
 | 4 | **공통 응답 포맷 확정** — API 명세 나오면 Axios 인터셉터 및 파싱 코드 반영 | 높음 | ⏳ API 명세 대기 | — |
 | 5 | **First Token Latency** — isTyping 타임아웃 정책 설정 | 중간 | ✅ 반영 완료 | `04-pages-chat.md` |
 | 6 | **메모리·개인정보 UI** — 마이페이지에 기억 관리 화면 추가 | 중간 | ✅ 반영 완료 | `04-pages-mypage.md` |
